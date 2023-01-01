@@ -1,0 +1,12 @@
+.class_g {
+    a : integer
+    b : integer
+    c : boolean
+    d : string
+}
+
+.class_v1 {
+    a : integer
+    b : string
+    c : integer
+}

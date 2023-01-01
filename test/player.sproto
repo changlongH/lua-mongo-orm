@@ -1,0 +1,53 @@
+.Profile {
+    name : string
+    gender : integer
+    exp : integer
+    lv : integer
+    pl : integer
+    gold : integer
+    diamond : integer
+    vip : integer
+    create_time : date
+}
+
+.ItemBaseAttr {
+    type : integer
+    value : double
+}
+
+.Item {
+    id : integer
+    uuid : string
+    is_bind : boolean
+    base_attrs : *ItemBaseAttr
+}
+
+.StackableItem {
+    id : integer
+    amount  :integer
+}
+
+.UniqueItemSet {
+    id : integer
+    items : *Item(uuid)
+}
+
+.EquipSlot {
+    id : integer
+    item : Item
+}
+
+.BagMgr {
+    stackable : *StackableItem(id)
+    unique : *UniqueItemSet(id)
+}
+
+.Player {
+    account : string
+    uuid : string
+    profile : Profile # test
+    #bag : BagMgr
+    #equip : *EquipSlot(id)
+    #books : *Item
+    mails : *string(string)
+}

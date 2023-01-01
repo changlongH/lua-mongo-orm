@@ -1,0 +1,33 @@
+#include test2.sproto
+
+.class_a {
+    a : integer
+    b : double
+    c : *string
+    d : <string, integer>
+}
+
+.class_d {
+    a : class_a
+    b : class_a
+    c : class_g
+}
+
+.class_e {
+    .a {
+        b : *integer
+        e : *class_a
+    }
+    b : <string, date>
+    c : binary
+
+    .d {
+        a : integer
+        b : string
+        .c {
+            a : integer
+            b : *string
+            c : <string, integer>
+        }
+    }
+}
