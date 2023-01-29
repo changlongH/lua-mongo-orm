@@ -29,7 +29,7 @@
 
 .UniqueItemSet {
     id : integer
-    items : *Item(uuid)
+    items : *Item
 }
 
 .EquipSlot {
@@ -38,16 +38,15 @@
 }
 
 .BagMgr {
-    stackable : *StackableItem(id)
-    unique : *UniqueItemSet(id)
+    stackable : *StackableItem
+    unique : *UniqueItemSet
 }
 
 .Player {
     account : string
     uuid : string
     profile : Profile # test
-    #bag : BagMgr
-    #equip : *EquipSlot(id)
-    #books : *Item
-    mails : *string(string)
+    bag : BagMgr
+    equip : *EquipSlot
+    books : *Item
 }

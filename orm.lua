@@ -10,8 +10,11 @@ local KEYWORD_ATTRS = {
 
 -- 业务注册对应类型 integer boolean string binary map list struct date
 local KEYWORD_MAP = {}
-local function register_type(cls_type, is_atom, parse, default)
-    KEYWORD_MAP[cls_type] = {is_atom = is_atom, parser = parse, default = default}
+local function register_atom_type(cls_type, parse, default)
+    KEYWORD_MAP[cls_type] = {is_atom = true, parse = parse, default = default}
+end
+local function register_complex_type(cls_type, new, parse)
+    KEYWORD_MAP[cls_type] = {is_atom = false, new = new, parse = parse, default = nil}
 end
 
 local function has_cls_type(cls_type)
@@ -110,7 +113,7 @@ local function parse_struct(cls, data)
     local ret = {}
     for attr_name, attr_cls in pairs(cls.attrs) do
         local attr_data = data[attr_name]
-        -- 是否需要初始化默认值？
+        -- 没有数据且原子类型情况下不需要初始化
         if not (attr_data == nil and attr_cls.is_atom) then
             ret[attr_name] = attr_cls:parse(attr_data)
         end
@@ -162,16 +165,18 @@ local function create_struct(cls, data)
     enable_oldindex(obj, true)
     setmetatable(obj, cls.mt)
 
-    -- check data type
     if data == nil then
         for k, v in pairs(cls.attrs) do
             if not v.is_atom then
+                -- 深度初始化非原子类型数据
+                -- 触发struct_setfield
                 obj[k] = nil
             end
         end
     else
         for k, v in pairs(cls.attrs) do
             local k_data = data[k]
+            -- 原子类型且无数据则不赋值
             if not (k_data == nil and v.is_atom) then
                 obj[k] = k_data
             end
@@ -226,10 +231,6 @@ local function struct_setfield(obj, k, v)
     -- optimize, trust cls obj by name
     if type(v) == 'table' and v.__cls ~= nil then
         if v_cls.id == v.__cls.id then
-            -- print(
-            --     '-- struct trust cls obj',
-            --     cls.name, k, v_cls.name, v.__cls
-            -- )
             rawset(obj, k, v)
             return
         end
@@ -241,7 +242,7 @@ local function struct_setfield(obj, k, v)
     end
 
     -- if v == nil, set node default
-    -- print('-- struct, paser ', cls.name, k, v, v_cls.name, v_cls.parser)
+    -- print('-- struct, paser ', cls.name, k, v, v_cls.name, v_cls.parse)
     if v == nil and v_cls.is_atom then
         rawset(obj, k, nil)
         return
@@ -370,7 +371,7 @@ local function create_cls(cls, parent_name)
     check_ref(cls_name, parent_name)
 
     cls.id = cls
-    cls.parse = reg_cls.parser
+    cls.parse = reg_cls.parse
     cls.is_atom = reg_cls.is_atom
 
     if cls.is_atom then
@@ -378,7 +379,7 @@ local function create_cls(cls, parent_name)
     end
 
     if cls_type == 'struct' then
-        cls.new = create_struct
+        cls.new = reg_cls.new
         local mt_index = {__cls = cls}
         cls.mt = {
             __index = mt_index,
@@ -404,7 +405,7 @@ local function create_cls(cls, parent_name)
     end
 
     if cls_type == 'list' then
-        cls.new = create_list
+        cls.new = reg_cls.new
         cls.mt = {
             __index = {__cls = cls},
             __newindex = list_setfield,
@@ -416,7 +417,7 @@ local function create_cls(cls, parent_name)
     end
 
     if cls_type == 'map' then
-        cls.new = create_map
+        cls.new = reg_cls.new
         cls.mt = {
             __index = {__cls = cls},
             __newindex = map_setfield,
@@ -431,15 +432,16 @@ local function create_cls(cls, parent_name)
     error(string.format("unsupport cls type<%s>", cls_type))
 end
 
-register_type("boolean", true, parse_boolean, false)
-register_type("integer", true, parse_integer, 0)
-register_type("double", true, parse_double, 0)
-register_type("string", true, parse_string, "")
-register_type("binary", true, parse_binary, "")
-register_type("date", true, parse_date, nil) -- mongodb ISODate bson.date(timestamp)
-register_type("map", false, parse_map, nil)
-register_type("list", false, parse_list, nil)
-register_type("struct", false, parse_struct, nil)
+register_atom_type("boolean", parse_boolean, false)
+register_atom_type("integer", parse_integer, 0)
+register_atom_type("double", parse_double, 0)
+register_atom_type("string", parse_string, "")
+register_atom_type("binary", parse_binary, "")
+register_atom_type("date", parse_date, nil) -- mongodb ISODate bson.date(timestamp)
+
+register_complex_type("map", create_map, parse_map)
+register_complex_type("list", create_list, parse_list)
+register_complex_type("struct", create_struct, parse_struct)
 
 local M = {}
 function M.init(type_list)

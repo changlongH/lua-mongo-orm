@@ -18,7 +18,7 @@ local type_list = (require 'typedef').parse('test.sproto', "./test")
 print('[TC]: type init')
 orm.init(type_list)
 
---tprint(orm.g_cls_map, nil, 10)
+tprint(orm.g_cls_map, nil, 10)
 --tprint(orm.g_cls_ref_map)
 
 --print('[TC]: struct init')

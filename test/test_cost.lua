@@ -3,7 +3,6 @@ tprint = require('utils').print_table
 local type_list = (require 'typedef').parse('player.sproto', "./test")
 print(type_list)
 orm.init(type_list)
-orm.dump_all_cls_map()
 
 local data =   {
     ["_id"] = "551a1b6d67634b94416ec033",
