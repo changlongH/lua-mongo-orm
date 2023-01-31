@@ -230,7 +230,7 @@ local function struct_setfield(obj, k, v)
 
     -- optimize, trust cls obj by name
     if type(v) == 'table' and v.__cls ~= nil then
-        if v_cls.id == v.__cls.id then
+        if v_cls.id.name == v.__cls.name then
             rawset(obj, k, v)
             return
         end
@@ -271,11 +271,7 @@ local function list_setfield(obj, k, v)
     local v_cls = cls.item
     -- optimize, trust cls obj by name
     if type(v) == 'table' and v.__cls ~= nil then
-        if v_cls.id == v.__cls.id then
-            -- print(
-            --     '-- list trust cls obj',
-            --     cls.name, k, v_cls.name, v.__cls
-            -- )
+        if v_cls.id.name == v.__cls.name then
             rawset(obj, k, v)
             return
         end
@@ -306,11 +302,7 @@ local function map_setfield(obj, k, v)
     local v_cls = cls.value
     -- optimize, trust cls obj by name
     if type(v) == 'table' and v.__cls ~= nil then
-        if v_cls.id == v.__cls.id then
-            -- print(
-            --     '-- map trust cls obj',
-            --     cls.name, k, v_cls.name, v.__cls
-            -- )
+        if v_cls.id.name == v.__cls.name then
             rawset(obj, k_data, v)
             return
         end

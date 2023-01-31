@@ -1,8 +1,9 @@
 local orm = require 'orm'
-tprint = require('utils').print_table
+tprint = require('utils').dump
 local type_list = (require 'typedef').parse('player.sproto', "./test")
 print(type_list)
 orm.init(type_list)
+--tprint(orm.g_cls_map, nil, 10)
 
 local data =   {
     ["_id"] = "551a1b6d67634b94416ec033",
@@ -127,7 +128,6 @@ local function test_normal()
     tprint(obj.books[len])
     print(obj.books[len].base_attrs[1].value)
 
-    --[[
     local books = obj.books
     for i=1, 10 do
         table.insert(books, {id=2001, amount = 1, uuid = 'book_id_' .. i, base_attrs = {{type = 1001}, {type = 1002}}})
@@ -135,7 +135,6 @@ local function test_normal()
     for i=5, 1, -1 do
         table.remove(books, i)
     end
-    --]]
 
     -- tprint(obj, "player", 10)
     -- print("is bind", obj.equip[1].item.is_bind)
