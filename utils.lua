@@ -22,7 +22,7 @@ function string.split(input, delimiter)
 end
 
 function M.dump(rvalue, rdesciption, nesting)
-    if type(nesting) ~= "number" then nesting = 3 end
+    if type(nesting) ~= "number" then nesting = 10 end
 
     local lookupTable = {}
     local result = {}
