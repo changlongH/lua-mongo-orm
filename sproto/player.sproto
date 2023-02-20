@@ -1,0 +1,62 @@
+.Prop {
+    uid : integer
+    name : string
+    exp : double
+    items : <string, integer>
+    create_time : date
+    frames : *string
+}
+
+.Bag {
+    name : string
+    items : <string, integer>
+}
+
+.Pos {
+    x : integer
+    y : integer
+}
+
+.Hero {
+    id : string
+    name : string
+    pos : Pos
+}
+
+.Mail {
+    id : string
+    title : string
+}
+
+.IntDict {
+    info : <integer, integer>
+    mail : Mail
+}
+
+.Player {
+    prop : Prop # 玩家属性
+
+    bag1 : Bag # 玩家背包1
+    bag2 : Bag # 玩家背白2
+
+    heroes : <string, Hero>
+
+    loginInfo : <string, integer>
+    sign : binary
+
+    .org {
+        id : integer
+        name : string
+        .members {
+            cnt : integer
+            info : <integer, integer>
+        }
+    }
+
+    # 数组测试
+    mails : *Mail
+    # 数组包含字典测试
+    # groups : *<integer, string> 不支持
+    groups : *IntDict
+}
+

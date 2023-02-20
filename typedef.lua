@@ -231,14 +231,14 @@ function convert.struct(obj, set)
             field.type = 'map'
 
             if not has_type(field_data[1], set) then
-                error(string.format("Undefined type <%s> in %s", highlight_type(field_data[1]), tostring(obj.meta)))
+                error(string.format("Undefined key type <%s> in %s", highlight_type(field_data[1]), tostring(obj.meta)))
             end
             if not has_type(field_data[2], set) then
-                error(string.format("Undefined type <%s> in %s", highlight_type(field_data[2]), tostring(obj.meta)))
+                error(string.format("Undefined value type <%s> in %s", highlight_type(field_data[2]), tostring(obj.meta)))
             end
 
-            field.key = {type = field_data[2]}
-            field.value = {type = field_data[1]}
+            field.key = {type = field_data[1]}
+            field.value = {type = field_data[2]}
 
         elseif field_data_type == 'list' then
             field.type = 'list'
@@ -290,22 +290,22 @@ function convert.map(obj, set)
         error(string.format("type_name<%s> is keyword", highlight_type(type_name)))
     end
 
-    if not has_type(obj[5], set) then
-        error(string.format("Undefined type <%s> in %s", highlight_type(obj[5]), tostring(obj.meta)))
-    end
     if not has_type(obj[4], set) then
-        error(string.format("Undefined type <%s> in %s", highlight_type(obj[4]), tostring(obj.meta)))
+        error(string.format("Undefined key type <%s> in %s", highlight_type(obj[5]), tostring(obj.meta)))
+    end
+    if not has_type(obj[5], set) then
+        error(string.format("Undefined value type <%s> in %s", highlight_type(obj[4]), tostring(obj.meta)))
     end
 
     return {
         type = 'map',
         name = type_name,
-        key = {type = obj[5]},
-        value = {type = obj[4]},
+        key = {type = obj[4]},
+        value = {type = obj[5]},
     }
 end
 
-local tprint = require('utils').dump
+--local tprint = require('utils').dump
 local function parse(pattern, filename, dir)
     assert(type(filename) == "string")
     local text = preprocess(filename, dir)
