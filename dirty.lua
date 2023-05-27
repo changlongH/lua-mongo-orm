@@ -46,7 +46,7 @@ local function init_dirty_node(mng)
     local dirty_node = {
         mng_ptr = mng,
         op_map = {},
-        op_cn = 0,
+        op_cnt = 0,
     }
 
     local root_mng = rawget(mng.root, '__dirty')
@@ -187,11 +187,11 @@ end
 
 local function dirty_node_insert_dk(dirty_node, key, op)
     dirty_node.op_map[key] = op
-    dirty_node.op_cn= dirty_node.op_cn + 1
+    dirty_node.op_cnt = dirty_node.op_cnt + 1
 end
 local function dirty_node_remove_dk(dirty_node, key)
     dirty_node.op_map[key] = nil
-    dirty_node.op_cn= dirty_node.op_cn - 1
+    dirty_node.op_cnt = dirty_node.op_cnt - 1
 end
 local function dirty_node_overwrite_dk(dirty_node, key, op)
     local dk_op_map = dirty_node.op_map
@@ -299,7 +299,7 @@ local function table_clone_obj(obj)
 
     local pack_key = false
     local cls = obj.__cls
-    if cls['type'] == 'map' and cls['key']['type'] == 'integer' then
+    if cls['type'] == 'dict' and cls['key']['type'] == 'integer' then
         pack_key = true
     end
     for key, value in pairs(obj) do
@@ -328,7 +328,7 @@ local function merge_mongo_dirty_map(dk_pre_path, obj, set, unset)
     end
 
     local cls = obj.__cls
-    if cls['type'] == 'map' and cls['key']['type'] == 'integer' then
+    if cls['type'] == 'dict' and cls['key']['type'] == 'integer' then
         dk_pre_path = dk_pre_path .. NUMBER_KEY_PRE
     end
 
@@ -372,7 +372,7 @@ local function collect_mongo_dirty_key(stack_s, root_mng, node)
         -- skey=members ---> player.org.members (skey=members)
         table_insert(stack_s, node.__dirty.skey)
     else
-        -- map key maybe number.
+        -- dict key maybe number.
         -- need conver number to (NUMBER_KEY_PRE .. key)
         -- skey=1001 ----> player.org.members.info.i@1001
         local skey_type = parent.__cls['key']['type']

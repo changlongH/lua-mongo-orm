@@ -1,12 +1,12 @@
--- lua function enable_oldindex can enable or disable metamethod __oldindex
--- local enable_oldindex = enable_oldindex or (function() end)
-
 local Dirty = require("dirty")
 local math = math
 local tconcat = table.concat
 local tonumber = tonumber
 local tostring = tostring
 local next = next
+local tointeger = math.tointeger
+local math_abs = math.abs
+local MATH_HUGE = math.huge
 
 local function _cls_parse_error(cls, data, msg)
     local s = string.format("cls parse: <%s> <%s> %s", cls.name, tostring(data), tostring(msg))
@@ -21,7 +21,7 @@ end
 -- setfield 修改属性（非atom类型）
 local KEYWORD_MAP = {
     ["struct"] = require("orm_cls.struct"),
-    ["map"] = require("orm_cls.dict"),
+    ["dict"] = require("orm_cls.dict"),
     ["list"] = require("orm_cls.list"),
     ["boolean"] = {is_atom=true, default=false,
         parse = function(_, s)
@@ -30,7 +30,7 @@ local KEYWORD_MAP = {
     },
     ["integer"] = {is_atom=true, default=0,
         parse = function(cls, s)
-            local value = math.tointeger(s)
+            local value = tointeger(s)
             if value == nil then
                 _cls_parse_error(cls, s, "is not integer")
             end
@@ -40,7 +40,7 @@ local KEYWORD_MAP = {
     ["double"] = {is_atom=true, default=0,
         parse = function(cls, s)
             local value = tonumber(s)
-            if value == nil then
+            if value == nil or value ~= value or math_abs(value) == math.huge then
                 _cls_parse_error(cls, s, "is not double")
             end
             return value
@@ -67,6 +67,7 @@ local KEYWORD_ATTRS = {
     ['__cls'] = true,
     ['__dirty'] = true,
     ['__data'] = true,
+    ['__ref'] = true,
 }
 
 local function has_cls_type(cls_type)
@@ -220,7 +221,7 @@ local function create_cls(cls, parent_name)
         return cls
     end
 
-    if cls_type == 'map' then
+    if cls_type == 'dict' then
         cls.key.name = 'key'
         cls.key = create_cls(cls.key, cls_name)
         cls.value.name = 'value'

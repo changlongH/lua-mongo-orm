@@ -5,20 +5,20 @@ local DirtyTest = {}
 
 function DirtyTest.enable(player, pt)
     ORM.enable_dirty(player)
-    player.prop.name = "大聪明enable"
-    player.sign = "xxxxxxxxxxxx"
+    player.prop.name = "PlayerA_Enable"
+    player.sign = "====sign-string====="
     player.org.id = 1003
-    player.org.name = "舔狗联盟"
+    player.org.name = "allianceA"
 
-    assert(ORM.get_dirty_info(player.prop) == nil, "root 才有dirty info")
+    assert(ORM.get_dirty_info(player.prop) == nil, "dirty node not root")
 
-    player.bag2 = {name = "背包2", items = {}}
+    player.bag2 = {name = "bag2", items = {}}
     player.bag2.items['coin'] = 100
     player.bag2.items['stone'] = 100
     player.bag2.items['stone'] = nil
 
     local ret = ORM.get_dirty_info(player)
-    assert(type(ret['bag2']) == 'number', "子节点不产生脏数据")
+    assert(type(ret['bag2']) == 'number', "sub node dirty")
 
     local update = ORM.get_mongo_dirty_data(player)
     if pt then
@@ -40,20 +40,20 @@ function DirtyTest.enable(player, pt)
     if pt then
         tprint(update)
     end
-    assert(update ~= nil, "获取脏数据异常")
+    assert(update ~= nil, "invalid dirty update")
 
     player.bag2.items['coin'] = 200
     player.bag2.items['stone'] = 300
     player.bag2.items['stone'] = nil
     ret = ORM.get_dirty_info(player)
     items = ret['bag2']['items']
-    assert(items['coin'] == 0 and items['stone'] == nil, "add/del 不产生脏数据")
+    assert(items['coin'] == 0 and items['stone'] == nil, "add first then del not dirty")
 
-    player.bag2 = {name = "碎片背包"}
-    player.bag2.name = "碎片背包2"
+    player.bag2 = {name = "heroBag2"}
+    player.bag2.name = "heroBag2"
     player.bag2.items = {stone = 100, coin = 100}
     ret = ORM.get_dirty_info(player)
-    assert(ret['bag2'] == 0, "子节点脏数据被清空")
+    assert(ret['bag2'] == 0, "sub node dirty clear")
 
     -- 清理之后子节点变更也会触发脏数据
     ORM.clear_dirty_info(player)
@@ -61,12 +61,12 @@ function DirtyTest.enable(player, pt)
     player.bag2.items.coin = 101
 
     ret = ORM.get_dirty_info(player)
-    assert(ret['bag2']['items']['stone'] == 0, "子节点有数据")
-    assert(ret['bag2']['items']['coin'] == 0, "子节点有数据")
+    assert(ret['bag2']['items']['stone'] == 0, "sub node dirty")
+    assert(ret['bag2']['items']['coin'] == 0, "sub node dirty")
 
     -- 关闭脏数据管理
     ORM.disable_dirty(player)
-    player.prop.name = "大聪明disable"
+    player.prop.name = "PlayerA_Disable"
     ret = ORM.get_dirty_info(player)
     assert(ret == nil, "not enable dirty")
 
@@ -81,8 +81,8 @@ end
 function DirtyTest.mongo_dirty(player, pt)
     ORM.enable_dirty(player)
     player.groups = {}
-    player.groups[1] = {info = {[1001] = 100}, mail = {id=1001, title="数组下标深度邮件1"}}
-    player.groups[2] = {info = {[1001] = 100}, mail = {id=1002, title="数组下标深度邮件2"}}
+    player.groups[1] = {info = {[1001] = 100}, mail = {id=1001, title="array index1"}}
+    player.groups[2] = {info = {[1001] = 100}, mail = {id=1002, title="array index2"}}
     local update = ORM.get_mongo_dirty_data(player)
     if pt then
         tprint(update)
@@ -93,7 +93,7 @@ function DirtyTest.mongo_dirty(player, pt)
     player.groups[1].info[1001] = nil
 
     player.groups[1].mail.id = "new1001"
-    player.groups[1].mail.title = "数组下标深度邮件1new"
+    player.groups[1].mail.title = "array index1 new"
 
     player.groups[2].info[1001] = 90
 
@@ -104,8 +104,8 @@ function DirtyTest.mongo_dirty(player, pt)
 
     ORM.clear_dirty_info(player)
     -- list 添加和删除测试
-    player.groups[3] = {info = {[1001] = 100}, mail = {id=1003, title="数组下标深度邮件3"}}
-    player.groups[4] = {info = {[1001] = 100}, mail = {id=1004, title="数组下标深度邮件4"}}
+    player.groups[3] = {info = {[1001] = 100}, mail = {id=1003, title="array index3"}}
+    player.groups[4] = {info = {[1001] = 100}, mail = {id=1004, title="array index4"}}
     if pt then
         tprint(ORM.get_mongo_dirty_data(player))
     end

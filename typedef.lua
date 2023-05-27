@@ -1,3 +1,6 @@
+local LPEG_PATH = "./lpeg-1.0.2/?.so"
+package.cpath = package.cpath ..";" .. LPEG_PATH
+
 local lpeg = require "lpeg"
 local P = lpeg.P
 local R = lpeg.R
@@ -42,7 +45,7 @@ end
 local exception = lpeg.Cmt(
     Carg(1),
     function(_, pos, parser_state)
-        local line_info = line_infos[parser_state.line]
+        local line_info = line_infos[parser_state.line] or parser_state
         local s = highlight(string.format("syntax error at %s:%d line", line_info.file, line_info.line))
         error(s)
         return pos
@@ -68,7 +71,7 @@ local function metapatt(_)
     local patt = lpeg.Cmt(
         Carg(1),
         function(_, pos, parser_state)
-            local info = line_infos[parser_state.line]
+            local info = line_infos[parser_state.line] or {line = parser_state.line, file = parser_state.file}
             setmetatable(info, {__tostring = function(v)
                 return highlight(string.format("at %s:%d line", v.file, v.line))
             end})
@@ -106,7 +109,7 @@ local typedef = P {
                  ) +
 
                  namedpat(
-                     "map",
+                     "dict",
                       P"<" * blank0 * typename * blank0 * "," * blank0 * typename * blank0 * P">"
                  )
              )
@@ -130,13 +133,13 @@ local typedef = P {
         blank0 * name * blank0 * ":" * blank0 * "*" * blank0 * typename
     ),
 
-    MAP = namedpat(
-        "map",
+    DICT = namedpat(
+        "dict",
         blank0 * name * blank0 * ":" *
             blank0 * P"<" * blank0 * typename * blank0 * "," * blank0 * typename * blank0 * P">"
     ),
 
-    ALL = multipat(V"STRUCT" + V"LIST" + V"MAP"),
+    ALL = multipat(V"STRUCT" + V"LIST" + V"DICT"),
 }
 
 local schema = blank0 * typedef * blank0
@@ -174,7 +177,7 @@ local KEYWORD_MAP = {
     string = true,
     struct = true,
     list = true,
-    map = true,
+    dict = true,
     double = true,
     binary = true,
     date = true,
@@ -200,7 +203,7 @@ function convert.struct(obj, set)
         error(string.format("type_name<%s> is keyword", highlight_type(type_name)))
     end
 
-    local field_map = {}
+    local field_dict = {}
     for _, f in ipairs(obj[2]) do
         local field_name = f[1]
         local field_data = f[2]
@@ -217,7 +220,7 @@ function convert.struct(obj, set)
             error(string.format("struct %s field %s is keyword", highlight_type(type_name), highlight_tag(field_name)))
         end
 
-        if field_map[field_name] then
+        if field_dict[field_name] then
             error(string.format("struct %s field %s is redefined", highlight_type(type_name), highlight_tag(field_name)))
         end
 
@@ -227,8 +230,8 @@ function convert.struct(obj, set)
                 error(string.format("Undefined type <%s> %s", highlight_type(field_data[1]), tostring(obj.meta)))
             end
             field.type = field_data[1]
-        elseif field_data_type == 'map' then
-            field.type = 'map'
+        elseif field_data_type == 'dict' then
+            field.type = 'dict'
 
             if not has_type(field_data[1], set) then
                 error(string.format("Undefined key type <%s> in %s", highlight_type(field_data[1]), tostring(obj.meta)))
@@ -257,13 +260,13 @@ function convert.struct(obj, set)
             error(string.format("struct %s field %s unknown type", highlight_type(type_name), highlight_tag(field_name)))
         end
 
-        field_map[field_name] = field
+        field_dict[field_name] = field
     end
 
     return {
         type = 'struct',
         name = type_name,
-        attrs = field_map,
+        attrs = field_dict,
     }
 end
 
@@ -284,7 +287,7 @@ function convert.list(obj, set)
     }
 end
 
-function convert.map(obj, set)
+function convert.dict(obj, set)
     local type_name = obj[1]
     if KEYWORD_MAP[type_name] then
         error(string.format("type_name<%s> is keyword", highlight_type(type_name)))
@@ -298,7 +301,7 @@ function convert.map(obj, set)
     end
 
     return {
-        type = 'map',
+        type = 'dict',
         name = type_name,
         key = {type = obj[4]},
         value = {type = obj[5]},
@@ -306,9 +309,7 @@ function convert.map(obj, set)
 end
 
 --local tprint = require('utils').dump
-local function parse(pattern, filename, dir)
-    assert(type(filename) == "string")
-    local text = preprocess(filename, dir)
+local function parse(pattern, filename, text)
     local state = {file = filename, pos = 0, line = 1}
     local r = lpeg.match(pattern * -1 + exception, text, 1, state)
     local ret = {}
@@ -329,8 +330,15 @@ end
 
 
 local M = {}
-function M.parse(...)
-    return parse(schema, ...)
+function M.parse_file(filename, dir)
+    assert(type(filename) == "string")
+    local text = preprocess(filename, dir)
+    return parse(schema, filename, text)
+end
+
+function M.parse_text(text, filename)
+    line_infos = {}
+    return parse(schema, filename, text)
 end
 
 return M

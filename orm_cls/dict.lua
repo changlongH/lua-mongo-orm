@@ -54,7 +54,7 @@ end
 function Dict.setfield(obj, k, v)
     local cls = obj.__cls
     if not cls then
-        error(string.format("cls map not define. set <unknow.%s>:<%s>", k, tostring(v)))
+        error(string.format("cls dict not define. set <unknow.%s>:<%s>", k, tostring(v)))
     end
 
     local v_cls = cls.value

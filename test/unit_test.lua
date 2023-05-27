@@ -1,14 +1,14 @@
 local ORM = require 'orm'
 local typedef = require 'typedef'
 
+
 local tprint = require('utils').dump
 
-local type_list = typedef.parse('player.sproto', "./sproto")
+local typeList = typedef.parse_file('player.sproto', "./test/sproto")
 
---tprint(type_list)
+tprint(typeList)
 
---print('[TC]: type init')
-ORM.init(type_list)
+ORM.init(typeList)
 
 --tprint(ORM.g_cls_map, nil, 10)
 --tprint(ORM.g_cls_ref_map)
@@ -25,9 +25,9 @@ end
 
 -- 引用测试
 local function testDictRef()
-    local ashe = genHero(1001, "艾希", {x=1, y=2})
-    local annie = genHero(1002, "安妮", {x=1, y=2})
-    local garen = genHero(1003, "盖伦", {x=1, y=3})
+    local ashe = genHero(1001, "Ashe", {x=1, y=2})
+    local annie = genHero(1002, "Annie", {x=1, y=2})
+    local garen = genHero(1003, "Garen", {x=1, y=3})
 
     -- 赋值方式为copy 不是直接引用
     local heroes = {}
@@ -56,8 +56,8 @@ local function testDictRef()
 
     -- 类型对象重新赋值是直接引用 不需要clone
     heroes.annie = annie -- 最后可以重新挂载回来
-    annie.name = "安妮2"
-    assert(heroes.annie == annie and heroes.annie.name == "安妮2", "dirty 类型对象重新赋值是直接引用")
+    annie.name = "Annie2"
+    assert(heroes.annie == annie and heroes.annie.name == "Annie2", "dirty 类型对象重新赋值是直接引用")
 
     ok = pcall(function()
         heroes.garen = annie
@@ -76,7 +76,7 @@ local function testStructRef()
 
     -- 基本类型测试
     prop.uid = 1001
-    prop.name = "大聪明"
+    prop.name = "PlayerA"
     prop.exp = 0.01
     prop.items = {
         coin = 100,
@@ -92,7 +92,7 @@ local function testStructRef()
     -- 私有结构体赋值
     player.org = {}
     player.org.id = 1001
-    player.org.name = "海王军团"
+    player.org.name = "allianceA"
     player.org.members = {cnt = 0, info = {}}
 
     -- 测试引用
@@ -197,7 +197,7 @@ end
 -- 5k * 100 = 50w
 local bt = os.clock()
 ORM.enable_dirty(player)
-local dirty_cnt = 0
+local dirtyCnt = 0
 for i = 0, 500000 do
     local index = math.random(1, 1000)
     if math.random(2) > 1 then
@@ -213,7 +213,7 @@ for i = 0, 500000 do
     player.prop.name = i
     if i % 200 == 0 then
         local ret = ORM.get_mongo_dirty_data(player)
-        dirty_cnt = dirty_cnt + ret.cnt
+        dirtyCnt = dirtyCnt + ret.cnt
         ORM.clear_dirty_info(player)
     end
 end
@@ -221,6 +221,6 @@ end
 ORM.get_mongo_dirty_data(player)
 ORM.clear_dirty_info(player)
 local et = os.clock()
-print(string.format("test CPU dirty cnt:%s time:%s", dirty_cnt, et - bt))
+print(string.format("test CPU dirty cnt:%s time:%s", dirtyCnt, et - bt))
 
 --tprint(player)
